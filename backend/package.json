@@ -42,7 +42,7 @@
     "@nestjs/swagger": "^3.1.0",
     "@nestjs/typeorm": "^6.3.4",
     "@types/jsonwebtoken": "^7.2.8",
-    "@types/superagent": "4.1.10",
+    "@types/superagent": "^4.1.14",
     "@types/winston": "^2.4.4",
     "buffer": "^6.0.3",
     "class-transformer": "^0.2.3",
