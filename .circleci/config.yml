@@ -32,6 +32,7 @@ jobs:
           name: Unit testing for FE
           command: |
             cd frontend
+            npm install
             npm run test
   test-backend:
     docker:
@@ -42,6 +43,7 @@ jobs:
           name: Unit testing for BE
           command: |
             cd backend
+            npm install
             npm run test
 
 workflows:
