@@ -2,23 +2,24 @@ version: 2.1
 orbs:
   slack: circleci/slack@4.12.1
   aws: circleci/aws-cli@3.1.5
-setup-aws:
-  description: setup aws
-  steps:
-    - aws/setup:
-        aws-access-key-id: AWS_ACCESS_KEY_ID
-        aws-secret-access-key: AWS_SECRET_ACCESS_KEY
-        aws-region: AWS_DEFAULT_REGION
-destroy-infra:
-  description: using for rollback
-  parameters:
-    stack_name:
-      type: string
-  steps:
-    - run:
-        name: rollback when railed
-        command: aws cloudformation delete-stack --stack-name "<<parameters.stack_name>>"
-        when: on_fail
+commands:
+  setup-aws:
+    description: setup aws
+    steps:
+      - aws/setup:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          aws-region: AWS_DEFAULT_REGION
+  destroy-infra:
+    description: using for rollback
+    parameters:
+      stack_name:
+        type: string
+    steps:
+      - run:
+          name: rollback when railed
+          command: aws cloudformation delete-stack --stack-name "<<parameters.stack_name>>"
+          when: on_fail
 jobs:
   slack-notify:
     docker:
