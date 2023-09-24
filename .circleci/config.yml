@@ -216,7 +216,7 @@ jobs:
             npm run build
             tar -czvf artifact-"${TEST_FE_STACK_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${TEST_FE_STACK_ID:0:7} --recursive
-      - destroy_infra:
+      - destroy-infra:
           stack_name: udapeople-frontend-${TEST_FE_STACK_ID:0:7}
 workflows:
   default:
