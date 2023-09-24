@@ -225,8 +225,8 @@ workflows:
     jobs:
       # - slack-notify:
       #     context: global
-      # - build-frontend:
-      #     context: global
+      - build-frontend:
+          context: global
       # - build-backend:
       #     context: global
       # - test-frontend:
