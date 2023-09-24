@@ -99,7 +99,8 @@ jobs:
             npm install
             npm audit --audit-level=critical
   deploy-infrastructure-be:
-    executor: aws/default
+    docker:
+      - image: node:14-alpine
     working_directory: ~/project
     steps:
       - checkout
@@ -136,6 +137,6 @@ workflows:
           requires: [build-backend]
       - deploy-infrastructure-be:
           requires:
-            - build-backend
-            - test-backend
-            - scan-backend
+            - [build-backend]
+            - [test-backend]
+            - [scan-backend]
