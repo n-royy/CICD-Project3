@@ -12,13 +12,6 @@
     - ansible_stdout_callback: yaml
     - NODEJS_VERSION: 14
 
-  pre_tasks:
-    - name: 'install python for Ansible.'
-      ansible.builtin.apt:
-        name: 'python2'
-        state: present
-        update_cache: yes
-
   # Get the environment variables from CircleCI and add to the EC2 instance
   environment:
     TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION') }}"
