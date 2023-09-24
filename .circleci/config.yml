@@ -246,11 +246,11 @@ workflows:
       #       - build-backend
       #       - test-backend
       #       - scan-backend
-      # - deploy-infrastructure-be
+      - deploy-infrastructure-be
       # # - deploy_infra_fe
-      # - configure-infra:
-      #     requires:
-      #       - deploy-infrastructure-be
+      - configure-infra:
+          requires:
+            - deploy-infrastructure-be
       - deploy-frontend:
           requires:
             - build-frontend
