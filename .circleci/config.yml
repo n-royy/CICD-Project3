@@ -116,14 +116,14 @@ jobs:
     steps:
       - checkout
       - setup-aws
-      # - run:
-      #     name: infrastructure in BE
-      #     command: |
-      #       aws cloudformation deploy \
-      #        --template-file .circleci/files/backend.yml \
-      #          --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-      #          --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
-      #          --tags project=udapeople
+      - run:
+          name: infrastructure in BE
+          command: |
+            aws cloudformation deploy \
+             --template-file .circleci/files/backend.yml \
+               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
+               --tags project=udapeople
       - run:
           name: create inventory
           command: |
@@ -191,14 +191,11 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install awscli
-          command: apt install awscli
-      - run:
-          name: setup aws
-          command: |
-            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-            aws configure set region $AWS_DEFAULT_REGION
+          name: Install and setup awscli
+          command: chmod +x .circleci/bash/installAndSetupAws.sh && .circleci/bash/installAndSetupAws.sh
+      - restore_cache:
+          name: restore node_modules
+          key: fe-caches-{{ checksum "frontend/package.json" }}
       - restore_cache:
           keys:
             - fe-caches-{{ checksum "frontend/package.json" }}
@@ -218,15 +215,33 @@ jobs:
             npm run build
             tar -czvf artifact-"${TEST_FE_STACK_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${TEST_FE_STACK_ID:0:7} --recursive
-      - destroy-infra:
-          stack_name: udapeople-frontend-${TEST_FE_STACK_ID:0:7}
+  deploy_backend:
+    executor: python/default
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - 5e:0a:cf:5d:a3:74:92:9a:8b:9f:eb:dc:50:6b:16:75
+      - restore_cache:
+          keys:
+            - inventory-{{ .Revision  }}
+            - inventory-
+      - run:
+          name: install ansible
+          command: pip install --user ansible
+      - run:
+          name: create artifact
+          command: tar -C backend -czvf .circleci/ansible/roles/deploy/artifact/artifact.tar.gz .
+      - run:
+          name: Start backend with ansible
+          command: ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
 workflows:
   default:
     jobs:
       # - slack-notify:
       #     context: global
-      - build-frontend:
-          context: global
+      # - build-frontend:
+      #     context: global
       # - build-backend:
       #     context: global
       # - test-frontend:
@@ -247,11 +262,16 @@ workflows:
       #       - test-backend
       #       - scan-backend
       - deploy-infrastructure-be
-      # # - deploy_infra_fe
+      # - deploy_infra_fe
       - configure-infra:
           requires:
             - deploy-infrastructure-be
-      - deploy-frontend:
+      - run-migration:
+          requires: []
+      # - deploy-frontend:
+      #     requires:
+      #       - build-frontend
+      #       - configure-infra
+      - deploy_backend:
           requires:
-            - build-frontend
             - configure-infra
