@@ -125,18 +125,24 @@ workflows:
     jobs:
       - slack-notify:
           context: global
-      - build-frontend
-      - build-backend
+      - build-frontend:
+          context: global
+      - build-backend:
+          context: global
       - test-frontend:
-          requires: [build-frontend]
+          requires:
+            - build-frontend
       - test-backend:
-          requires: [build-backend]
+          requires:
+            - build-backend
       - scan-frontend:
-          requires: [build-frontend]
+          requires:
+            - build-frontend
       - scan-backend:
-          requires: [build-backend]
+          requires:
+            - build-backend
       - deploy-infrastructure-be:
           requires:
-            - [build-backend]
-            - [test-backend]
-            - [scan-backend]
+            - build-backend
+            - test-backend
+            - scan-backend
