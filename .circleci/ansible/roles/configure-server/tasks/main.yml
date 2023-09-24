@@ -22,10 +22,12 @@
   apt:
     name: nodejs
     state: present
+
 - name: Install the npm
   apt:
     name: npm
     state: present
+
 - name: Install the PM2 at global scope
   npm:
     name: pm2
