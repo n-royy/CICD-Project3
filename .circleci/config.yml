@@ -169,7 +169,8 @@ jobs:
           name: configure with ansible
           command: ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
   run-migration:
-    executor: node
+    docker:
+      - image: node:14-alpine
     steps:
       - checkout
       - restore_cache:
@@ -185,7 +186,8 @@ jobs:
           command: chmod +x .circleci/bash/MigrationResult.sh && .circleci/bash/MigrationResult.sh
       - revert-migration
   deploy-frontend:
-    executor: node
+    docker:
+      - image: node:14-alpine
     steps:
       - checkout
       - run:
