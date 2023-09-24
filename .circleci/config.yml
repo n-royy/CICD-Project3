@@ -150,8 +150,6 @@ jobs:
                --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
                --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
                --tags project=udapeople
-      - destroy_infra:
-          stack_name: udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
   configure-infra:
     executor: python/default
     working_directory: ~/project
@@ -223,6 +221,7 @@ jobs:
           fingerprints:
             - 5e:0a:cf:5d:a3:74:92:9a:8b:9f:eb:dc:50:6b:16:75
       - restore_cache:
+          name: restore inventory
           keys:
             - inventory-{{ .Revision  }}
             - inventory-
