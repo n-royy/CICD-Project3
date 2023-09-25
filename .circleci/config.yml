@@ -230,7 +230,7 @@ jobs:
           command: pip install --user ansible
       - run:
           name: create artifact
-          command: tar -C backend -czvf .circleci/ansible/roles/deploy/artifact/artifact.tar.gz .
+          command: tar -C backend -czvf .circleci/ansible/roles/deploy/artifact/artifact.tar.gz
       - run:
           name: Start backend with ansible
           command: ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
