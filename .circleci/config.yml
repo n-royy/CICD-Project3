@@ -28,6 +28,14 @@ commands:
             aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
             aws configure set region $AWS_DEFAULT_REGION
 
+  install-tar-utility:
+    description: Install tar utility
+    steps:
+      - run:
+          name: Install tar utility
+          command: |
+            yum install -y tar gzip
+
   install-awscli-alpine-based:
     description: Install awscli for environment still not have awscli
     steps:
@@ -294,6 +302,7 @@ jobs:
     steps:
       - checkout
       - setup-aws
+      - install-tar-utility
       - run:
           name: Deploy back-end infrastructure
           command: |
