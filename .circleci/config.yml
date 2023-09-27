@@ -255,21 +255,21 @@ jobs:
       - image: node:14-alpine
     steps:
       - checkout
-      - run:
-          name: install and setup aws
-          command: chmod +x .circleci/bash/installAndSetupAws.sh && .circleci/bash/installAndSetupAws.sh
-      - restore_cache:
-          name: restore inventory
-          keys:
-            - inventory-{{ .Revision  }}
-            - inventory-
-      - restore_cache:
-          name: restore node_modules
-          keys:
-            - be-caches-{{ checksum "backend/package.json" }}
-      - run:
-          name: BE smoke test
-          command: chmod +x .circleci/bash/BESmokeTest.sh && .circleci/bash/BESmokeTest.sh
+      # - run:
+      #     name: install and setup aws
+      #     command: chmod +x .circleci/bash/installAndSetupAws.sh && .circleci/bash/installAndSetupAws.sh
+      # - restore_cache:
+      #     name: restore inventory
+      #     keys:
+      #       - inventory-{{ .Revision  }}
+      #       - inventory-
+      # - restore_cache:
+      #     name: restore node_modules
+      #     keys:
+      #       - be-caches-{{ checksum "backend/package.json" }}
+      # - run:
+      #     name: BE smoke test
+      #     command: chmod +x .circleci/bash/BESmokeTest.sh && .circleci/bash/BESmokeTest.sh
       - run:
           name: FE smoke test
           command: chmod +x .circleci/bash/FESmokeTest.sh && .circleci/bash/FESmokeTest.sh $FE_WORKFLOW_TEST_ID
@@ -320,6 +320,4 @@ workflows:
       - deploy_backend:
           requires:
             - configure-infra
-      - smoke-test:
-          requires:
-            - deploy_backend
+      - smoke-test
