@@ -311,8 +311,8 @@ workflows:
       - configure-infra:
           requires:
             - deploy-infrastructure-be
-      - run-migration:
-          requires: []
+      # - run-migration:
+      #     requires: []
       # - deploy-frontend:
       #     requires:
       #       - build-frontend
@@ -320,4 +320,6 @@ workflows:
       - deploy_backend:
           requires:
             - configure-infra
-      - smoke-test
+      - smoke-test:
+          requires:
+            - deploy_backend
