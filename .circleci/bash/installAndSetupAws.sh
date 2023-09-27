@@ -1,7 +1,7 @@
 echo "============ INSTALL AWSCLI =============="
-sudo apt upgrade 
-sudo apt update
-sudo apt install awscli -y
+apt upgrade 
+apt update
+apt install awscli -y
 
 echo "============ CONFIGURE AWS =============="
 aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
