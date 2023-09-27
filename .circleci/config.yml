@@ -11,25 +11,41 @@ commands:
           aws-access-key-id: AWS_ACCESS_KEY_ID
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY
           aws-region: AWS_DEFAULT_REGION
-  destroy-infra:
-    description: using for rollback
+  destroy-infra-fe:
+    description: using for rollback creating fe infra
+    parameters:
+      id:
+        type: string
+    steps:
+      - run:
+          name: delete all aws s3 files
+          command: aws s3 rm s3://udapeople-<< parameters.id >> --recursive
+          when: on_fail
+      - run:
+          name: delete frontend stack
+          command: aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.id >>
+          when: on_fail
+  destroy-infra-be:
+    description: using for rollback creating be infra
     parameters:
       stack_name:
         type: string
     steps:
       - run:
-          name: rollback when railed
+          name: destroy stack <<parameters.stack_name>>
           command: aws cloudformation delete-stack --stack-name "<<parameters.stack_name>>"
           when: on_fail
   revert-migration:
     description: Revert the migration.
+    parameters:
+      force_revert:
+        type: boolean
+        default: false
     steps:
       - run:
           name: Revert migrations
-          command: |
-            cd backend
-            chmod +x runRevertMigration.sh 
-            ./runRevertMigration.sh
+          command: chmod +x backend/runRevertMigration.sh && backend/runRevertMigration.sh << parameters.force_revert >>
+          when: always
 jobs:
   slack-notify:
     docker:
@@ -234,6 +250,35 @@ jobs:
       - run:
           name: Start backend with ansible
           command: ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
+  smoke-test:
+    docker:
+      - image: node:14-alpine
+    steps:
+      - checkout
+      - run:
+          name: install and setup aws
+          command: chmod +x .circleci/bash/installAndSetupAws.sh && .circleci/bash/installAndSetupAws.sh
+      - restore_cache:
+          name: restore inventory
+          keys:
+            - inventory-{{ .Revision  }}
+            - inventory-
+      - restore_cache:
+          name: restore node_modules
+          keys:
+            - be-caches-{{ checksum "backend/package.json" }}
+      - run:
+          name: Back End smoke test
+          command: chmod +x .circleci/bash/BESmokeTest.sh && .circleci/bash/BESmokeTest.sh
+      - run:
+          name: Front End smoke test
+          command: chmod +x .circleci/bash/FESmokeTest.sh && .circleci/bash/FESmokeTest.sh $FE_WORKFLOW_TEST_ID
+      - revert_migration_when_failed:
+          force_revert: true
+      - destroy-infra-be:
+          stack_name: udapeople-backend-${BE_WORKFLOW_TEST_ID:0:7}
+      - destroy-infra-fe:
+          id: ${FE_WORKFLOW_TEST_ID:0:7}
 workflows:
   default:
     jobs:
@@ -241,8 +286,8 @@ workflows:
       #     context: global
       # - build-frontend:
       #     context: global
-      - build-backend:
-          context: global
+      # - build-backend:
+      #     context: global
       # - test-frontend:
       #     requires:
       #       - build-frontend
@@ -265,9 +310,9 @@ workflows:
       # - configure-infra:
       #     requires:
       #       - deploy-infrastructure-be
-      - run-migration:
-          requires:
-            - build-backend
+      # - run-migration:
+      #     requires:
+      #       - build-backend
       # - deploy-frontend:
       #     requires:
       #       - build-frontend
@@ -275,3 +320,4 @@ workflows:
       # - deploy_backend:
       #     requires:
       #       - configure-infra
+      - smoke-test
