@@ -294,7 +294,6 @@ jobs:
     steps:
       - checkout
       - setup-aws
-      - install-tar-utility
       - run:
           name: Deploy back-end infrastructure
           command: |
