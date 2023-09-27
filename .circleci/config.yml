@@ -306,19 +306,18 @@ workflows:
       #       - build-backend
       #       - test-backend
       #       - scan-backend
-      # - deploy-infrastructure-be
+      - deploy-infrastructure-be
       # - deploy_infra_fe
-      # - configure-infra:
-      #     requires:
-      #       - deploy-infrastructure-be
-      # - run-migration:
-      #     requires:
-      #       - build-backend
+      - configure-infra:
+          requires:
+            - deploy-infrastructure-be
+      - run-migration:
+          requires: []
       # - deploy-frontend:
       #     requires:
       #       - build-frontend
       #       - configure-infra
-      # - deploy_backend:
-      #     requires:
-      #       - configure-infra
+      - deploy_backend:
+          requires:
+            - configure-infra
       - smoke-test
