@@ -293,7 +293,7 @@ jobs:
       - image: amazon/aws-cli:latest
     steps:
       - checkout
-      - setup_aws
+      - setup-aws
       - install-tar-utility
       - run:
           name: Deploy back-end infrastructure
