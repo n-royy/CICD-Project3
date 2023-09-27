@@ -1,6 +1,7 @@
 import * as React from 'react';
 import style from './style.local.css';
-import { shallow, ShallowWrapper } from 'enzyme';
+import * as Enzyme from 'enzyme';
+import * as Adapter from 'enzyme-adapter-react-16';
 import { Pagination } from '.';
 import { Button } from 'app/components/Button';
 
@@ -10,8 +11,9 @@ jest.mock('./style.local.css', () => ({
 
 style.Pagination__input = 'Pagination__input';
 
+Enzyme.configure({adapter: new Adapter()});
 describe('<Pagination>', () => {
-  let wrapper: ShallowWrapper;
+  let wrapper: Enzyme.ShallowWrapper;
   const onPageChangeMock = jest.fn();
   const onPageSizeChangeMock = jest.fn();
   const props: Pagination.Props = {
@@ -23,7 +25,7 @@ describe('<Pagination>', () => {
     loading: false,
   };
   beforeEach(() => {
-    wrapper = shallow(<Pagination {...props} />);
+    wrapper = Enzyme.shallow(<Pagination {...props} />);
   });
   it('Should render', () => {
     expect(wrapper).toBeDefined();

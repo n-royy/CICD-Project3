@@ -1,13 +1,15 @@
-import { ShallowWrapper, shallow } from 'enzyme';
+import * as Enzyme from 'enzyme';
+import * as Adapter from 'enzyme-adapter-react-16';
 import { NoFilteredOrders } from '.';
 import * as React from 'react';
 import { Button } from 'app/components/Button';
 
 const mockHandleResetOrders = jest.fn();
+Enzyme.configure({adapter: new Adapter()});
 describe('<NoFilteredOrders>', () => {
-  let wrapper: ShallowWrapper;
+  let wrapper: Enzyme.ShallowWrapper;
   beforeEach(() => {
-    wrapper = shallow(
+    wrapper = Enzyme.shallow(
       <NoFilteredOrders
         searchText=''
         handleResetOrders={mockHandleResetOrders}
