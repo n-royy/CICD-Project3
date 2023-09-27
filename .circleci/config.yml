@@ -45,7 +45,7 @@ commands:
       - run:
           name: Revert migrations
           command: chmod +x backend/runRevertMigration.sh && backend/runRevertMigration.sh << parameters.force_revert >>
-          when: always
+          when: on_fail
 jobs:
   slack-notify:
     docker:
@@ -209,8 +209,15 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install and setup awscli
-          command: chmod +x .circleci/bash/installAndSetupAws.sh && .circleci/bash/installAndSetupAws.sh
+          - run:
+          name: Install dependencies
+          command: |
+            sudo apt upgrade 
+            sudo apt update
+            sudo apt install awscli -y
+            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+            aws configure set region $AWS_DEFAULT_REGION
       - restore_cache:
           name: restore node_modules
           key: fe-caches-{{ checksum "frontend/package.json" }}
@@ -260,8 +267,14 @@ jobs:
     steps:
       - checkout
       - run:
-          name: install and setup aws
-          command: chmod +x .circleci/bash/installAndSetupAws.sh && .circleci/bash/installAndSetupAws.sh
+          name: Install dependencies
+          command: |
+            sudo apt upgrade 
+            sudo apt update
+            sudo apt install awscli -y
+            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+            aws configure set region $AWS_DEFAULT_REGION
       - restore_cache:
           name: restore inventory
           keys:
