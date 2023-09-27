@@ -140,7 +140,7 @@ jobs:
                --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
                --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
                --tags project=udapeople
-      - destroy_infra_be:
+      - destroy-infra-be:
           stack_name: udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: create inventory
@@ -168,7 +168,7 @@ jobs:
                --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
                --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
                --tags project=udapeople
-      - destroy_infra_be:
+      - destroy-infra-be:
           stack_name: udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
   configure-infra:
     executor: python/default
