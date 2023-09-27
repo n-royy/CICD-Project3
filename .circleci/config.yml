@@ -159,7 +159,7 @@ jobs:
     working_directory: ~/project
     steps:
       - checkout
-      - setup_aws
+      - setup-aws
       - run:
           name: infrastructure in FE
           command: |
