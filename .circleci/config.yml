@@ -314,7 +314,7 @@ workflows:
       - configure-infra:
           requires:
             - deploy-infrastructure-be
-      - run-migration:
+      - run-migration
       - deploy-frontend:
           requires:
             - deploy-infrastructure-fe
