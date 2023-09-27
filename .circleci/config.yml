@@ -255,18 +255,18 @@ jobs:
       - image: node:14-alpine
     steps:
       - checkout
-      - run:
-          name: install and setup aws
-          command: chmod +x .circleci/bash/installAndSetupAws.sh && .circleci/bash/installAndSetupAws.sh
-      - restore_cache:
-          name: restore inventory
-          keys:
-            - inventory-{{ .Revision  }}
-            - inventory-
-      - restore_cache:
-          name: restore node_modules
-          keys:
-            - be-caches-{{ checksum "backend/package.json" }}
+      # - run:
+      #     name: install and setup aws
+      #     command: chmod +x .circleci/bash/installAndSetupAws.sh && .circleci/bash/installAndSetupAws.sh
+      # - restore_cache:
+      #     name: restore inventory
+      #     keys:
+      #       - inventory-{{ .Revision  }}
+      #       - inventory-
+      # - restore_cache:
+      #     name: restore node_modules
+      #     keys:
+      #       - be-caches-{{ checksum "backend/package.json" }}
       - run:
           name: Back End smoke test
           command: chmod +x .circleci/bash/BESmokeTest.sh && .circleci/bash/BESmokeTest.sh
