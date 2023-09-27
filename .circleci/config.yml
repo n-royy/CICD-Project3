@@ -241,8 +241,8 @@ workflows:
       #     context: global
       # - build-frontend:
       #     context: global
-      # - build-backend:
-      #     context: global
+      - build-backend:
+          context: global
       # - test-frontend:
       #     requires:
       #       - build-frontend
@@ -266,7 +266,8 @@ workflows:
           requires:
             - deploy-infrastructure-be
       - run-migration:
-          requires: []
+          requires:
+            - build-backend
       # - deploy-frontend:
       #     requires:
       #       - build-frontend
