@@ -273,7 +273,7 @@ jobs:
       - run:
           name: Front End smoke test
           command: chmod +x .circleci/bash/FESmokeTest.sh && .circleci/bash/FESmokeTest.sh $FE_WORKFLOW_TEST_ID
-      - revert_migration_when_failed:
+      - revert-migration:
           force_revert: true
       - destroy-infra-be:
           stack_name: udapeople-backend-${BE_WORKFLOW_TEST_ID:0:7}
