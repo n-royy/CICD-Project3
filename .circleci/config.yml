@@ -140,6 +140,8 @@ jobs:
                --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
                --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
                --tags project=udapeople
+      - destroy_infra_be:
+          stack_name: udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: create inventory
           command: |
@@ -166,6 +168,8 @@ jobs:
                --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
                --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
                --tags project=udapeople
+      - destroy_infra_be:
+          stack_name: udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
   configure-infra:
     executor: python/default
     working_directory: ~/project
@@ -227,8 +231,8 @@ jobs:
           command: |
             cd frontend
             npm run build
-            tar -czvf artifact-"${TEST_FE_STACK_ID:0:7}".tar.gz dist
-            aws s3 cp dist s3://udapeople-${TEST_FE_STACK_ID:0:7} --recursive
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
   deploy_backend:
     executor: python/default
     steps:
@@ -255,31 +259,30 @@ jobs:
       - image: node:14-alpine
     steps:
       - checkout
-      # - run:
-      #     name: install and setup aws
-      #     command: chmod +x .circleci/bash/installAndSetupAws.sh && .circleci/bash/installAndSetupAws.sh
-      # - restore_cache:
-      #     name: restore inventory
-      #     keys:
-      #       - inventory-{{ .Revision  }}
-      #       - inventory-
-      # - restore_cache:
-      #     name: restore node_modules
-      #     keys:
-      #       - be-caches-{{ checksum "backend/package.json" }}
-      # - run:
-      #     name: BE smoke test
-      #     command: chmod +x .circleci/bash/BESmokeTest.sh && .circleci/bash/BESmokeTest.sh
+      - run:
+          name: install and setup aws
+          command: chmod +x .circleci/bash/installAndSetupAws.sh && .circleci/bash/installAndSetupAws.sh
+      - restore_cache:
+          name: restore inventory
+          keys:
+            - inventory-{{ .Revision  }}
+            - inventory-
+      - restore_cache:
+          name: restore node_modules
+          keys:
+            - be-caches-{{ checksum "backend/package.json" }}
+      - run:
+          name: BE smoke test
+          command: chmod +x .circleci/bash/BESmokeTest.sh && .circleci/bash/BESmokeTest.sh
       - run:
           name: FE smoke test
-          command: chmod +x .circleci/bash/FESmokeTest.sh && .circleci/bash/FESmokeTest.sh $FE_WORKFLOW_TEST_ID
+          command: chmod +x .circleci/bash/FESmokeTest.sh && .circleci/bash/FESmokeTest.sh $CIRCLE_WORKFLOW_ID
       - revert-migration:
           force_revert: true
-      ## TODO: Change to workflow ID
       - destroy-infra-be:
-          stack_name: udapeople-backend-${BE_WORKFLOW_TEST_ID:0:7}
+          stack_name: udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
       - destroy-infra-fe:
-          id: ${FE_WORKFLOW_TEST_ID:0:7}
+          id: ${CIRCLE_WORKFLOW_ID:0:7}
 workflows:
   default:
     jobs:
@@ -307,17 +310,18 @@ workflows:
       #       - test-backend
       #       - scan-backend
       - deploy-infrastructure-be
-      # - deploy_infra_fe
+      - deploy-infrastructure-fe
       - configure-infra:
           requires:
             - deploy-infrastructure-be
-      # - run-migration:
-      #     requires: []
-      # - deploy-frontend:
-      #     requires:
-      #       - build-frontend
-      #       - configure-infra
+      - run-migration:
+      - deploy-frontend:
+          requires:
+            - deploy-infrastructure-fe
       - deploy_backend:
           requires:
             - configure-infra
-      - smoke-test
+      - smoke-test:
+          requires:
+            - deploy-frontend
+            - deploy_backend
