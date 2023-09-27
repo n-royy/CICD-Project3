@@ -1,9 +1,188 @@
 version: 2.1
+
 orbs:
-  slack: circleci/slack@4.12.1
+  slack: circleci/slack@4.12.5
   aws: circleci/aws-cli@3.1.5
-  python: circleci/python@2.0.3
+
 commands:
+  destroy-environment:
+    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+    steps:
+      - run:
+          name: Destroy environments
+          when: on_fail
+          command: |
+            aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}"
+            aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}"
+
+  install-awscli:
+    description: Install awscli for environment still not have awscli
+    steps:
+      - run:
+          name: Install dependencies
+          command: |
+            sudo apt upgrade 
+            sudo apt update
+            sudo apt install awscli -y
+            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+            aws configure set region $AWS_DEFAULT_REGION
+
+  install-awscli-alpine-based:
+    description: Install awscli for environment still not have awscli
+    steps:
+      - run:
+          name: Install dependencies
+          command: |
+            pip install --no-cache-dir awscli
+            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+            aws configure set region $AWS_DEFAULT_REGION
+
+  slack_notification:
+    description: 'A slack notification'
+    steps:
+      - slack/notify:
+          event: fail
+          custom: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "Build *${CIRCLE_BUILD_NUM}* Failed. :red_circle:",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Job*: ${CIRCLE_JOB}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Build*: ${CIRCLE_BUILD_NUM}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Project*: $CIRCLE_PROJECT_REPONAME"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch*: $CIRCLE_BRANCH"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Commit*: $CIRCLE_SHA1"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Author*: $CIRCLE_USERNAME"
+                    }
+                  ],
+                  "accessory": {
+                    "type": "image",
+                    "image_url": "https://assets.brandfolder.com/otz5mn-bw4j2w-6jzqo8/original/circle-logo-badge-black.png",
+                    "alt_text": "CircleCI logo"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "action_id": "basic_fail_view",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Job"
+                      },
+                      "url": "${CIRCLE_BUILD_URL}"
+                    }
+                  ]
+                }
+              ]
+            }
+
+  slack_notification_succeeded:
+    description: 'A succeeded slack notification'
+    steps:
+      - slack/notify:
+          event: pass
+          custom: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "Build *${CIRCLE_BUILD_NUM}* Succeeded. :white_check_mark:",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Job*: ${CIRCLE_JOB}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Build*: ${CIRCLE_BUILD_NUM}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Project*: $CIRCLE_PROJECT_REPONAME"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch*: $CIRCLE_BRANCH"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Commit*: $CIRCLE_SHA1"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Author*: $CIRCLE_USERNAME"
+                    }
+                  ],
+                  "accessory": {
+                    "type": "image",
+                    "image_url": "https://assets.brandfolder.com/otz5mn-bw4j2w-6jzqo8/original/circle-logo-badge-black.png",
+                    "alt_text": "CircleCI logo"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "action_id": "basic_success_view",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Job"
+                      },
+                      "url": "${CIRCLE_BUILD_URL}"
+                    }
+                  ]
+                }
+              ]
+            }
+
   setup-aws:
     description: setup aws
     steps:
@@ -11,329 +190,304 @@ commands:
           aws-access-key-id: AWS_ACCESS_KEY_ID
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY
           aws-region: AWS_DEFAULT_REGION
-  destroy-infra-fe:
-    description: using for rollback creating fe infra
-    parameters:
-      id:
-        type: string
-    steps:
-      - run:
-          name: delete all aws s3 files
-          command: aws s3 rm s3://udapeople-<< parameters.id >> --recursive
-          when: on_fail
-      - run:
-          name: delete frontend stack
-          command: aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.id >>
-          when: on_fail
-  destroy-infra-be:
-    description: using for rollback creating be infra
-    parameters:
-      stack_name:
-        type: string
-    steps:
-      - run:
-          name: destroy stack <<parameters.stack_name>>
-          command: aws cloudformation delete-stack --stack-name "<<parameters.stack_name>>"
-          when: on_fail
-  revert-migration:
-    description: Revert the migration.
-    parameters:
-      force_revert:
-        type: boolean
-        default: false
-    steps:
-      - run:
-          name: Revert migrations
-          command: chmod +x backend/runRevertMigration.sh && backend/runRevertMigration.sh << parameters.force_revert >>
-          when: on_fail
-jobs:
-  slack-notify:
-    docker:
-      - image: 'cimg/base:stable'
-    steps:
-      - slack/notify:
-          event: fail
-          mentions: '@EngineeringTeam'
-          template: basic_fail_1
-      - slack/notify:
-          event: pass
-          template: success_tagged_deploy_1
 
+jobs:
   build-frontend:
     docker:
-      - image: node:14-alpine
+      - image: cimg/node:13.8.0
     steps:
       - checkout
+      - restore_cache:
+          keys: [frontend-build]
       - run:
-          name: Build front-end
+          name: Build FE
           command: |
             cd frontend
             npm install
             npm run build
+      - save_cache:
+          paths: [frontend/node_modules]
+          key: frontend-build
+      - slack_notification
+
   build-backend:
     docker:
-      - image: node:14-alpine
+      - image: cimg/node:13.8.0
     steps:
       - checkout
+      - restore_cache:
+          keys: [backend-build]
       - run:
-          name: Back-end build
+          name: Build BE
           command: |
             cd backend
             npm install
             npm run build
+      - save_cache:
+          paths: [backend/node_modules]
+          key: backend-build
+      - slack_notification
+
   test-frontend:
     docker:
-      - image: node:14-alpine
+      - image: cimg/node:13.8.0
     steps:
       - checkout
+      - restore_cache:
+          keys: [frontend-build]
       - run:
-          name: Unit testing for FE
+          name: Test FE
           command: |
             cd frontend
             npm install
             npm run test
+      - slack_notification
+
   test-backend:
     docker:
-      - image: node:14-alpine
+      - image: cimg/node:13.8.0
     steps:
       - checkout
+      - restore_cache:
+          keys: [backend-build]
       - run:
-          name: Unit testing for BE
+          name: Test BE
           command: |
             cd backend
             npm install
             npm run test
+      - slack_notification
+
   scan-frontend:
     docker:
-      - image: node:14-alpine
+      - image: cimg/node:13.8.0
     steps:
       - checkout
+      - restore_cache:
+          keys: [frontend-build]
       - run:
-          name: Scanning FE
+          name: Scan FE
           command: |
             cd frontend
             npm install
             npm audit --audit-level=critical
+      - slack_notification
+
   scan-backend:
     docker:
-      - image: node:14-alpine
+      - image: cimg/node:13.8.0
     steps:
       - checkout
+      - restore_cache:
+          keys: [backend-build]
       - run:
-          name: Scanning BE
+          name: Scan BE
           command: |
             cd backend
             npm install
             npm audit --audit-level=critical
-  deploy-infrastructure-be:
+      - slack_notification
+
+  deploy-infrastructure:
     docker:
-      - image: node:14-alpine
-    working_directory: ~/project
+      - image: amazon/aws-cli:latest
     steps:
       - checkout
-      - setup-aws
+      - setup_aws
+      - install-tar-utility
       - run:
-          name: infrastructure in BE
+          name: Deploy back-end infrastructure
           command: |
             aws cloudformation deploy \
-             --template-file .circleci/files/backend.yml \
-               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
-               --tags project=udapeople
-      - destroy-infra-be:
-          stack_name: udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
+              --template-file .circleci/files/backend.yml \
+              --tags project=udapeople \
+              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
-          name: create inventory
+          name: Deploy front-end infrastructure
           command: |
-            chmod +x .circleci/bash/IPAddress.sh
-            echo [web] > .circleci/ansible/inventory.txt
-            .circleci/bash/IPAddress.sh "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" >> .circleci/ansible/inventory.txt
+            aws cloudformation deploy \
+              --template-file .circleci/files/frontend.yml \
+              --tags project=udapeople \
+              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
+      - run:
+          name: Add back-end IP to ansible inventory
+          command: |
+            aws ec2 describe-instances --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --query 'Reservations[*].Instances[*].PublicIpAddress' --output text >> .circleci/ansible/inventory.txt
       - run: cat .circleci/ansible/inventory.txt
-      - save_cache:
+      - run: pwd
+      - persist_to_workspace:
+          root: ~/
           paths:
-            - .circleci/ansible/inventory.txt
-          key: inventory-{{ .Revision  }}
-  deploy-infrastructure-fe:
+            - project/.circleci/ansible/inventory.txt
+      - destroy-environment
+      - slack_notification
+
+  configure-infrastructure:
     docker:
-      - image: node:14-alpine
-    working_directory: ~/project
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
-      - setup-aws
-      - run:
-          name: infrastructure in FE
-          command: |
-            aws cloudformation deploy \
-             --template-file .circleci/files/frontend.yml \
-               --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
-               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
-               --tags project=udapeople
-      - destroy-infra-be:
-          stack_name: udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
-  configure-infra:
-    executor: python/default
-    working_directory: ~/project
-    steps:
-      - checkout
+      - install-awscli-alpine-based
       - add_ssh_keys:
           fingerprints:
             - 5e:0a:cf:5d:a3:74:92:9a:8b:9f:eb:dc:50:6b:16:75
-      - restore_cache:
-          key: inventory-{{ .Revision  }}
+      - attach_workspace:
+          at: ~/
+      - run: cat .circleci/ansible/inventory.txt
       - run:
-          name: install ansible
-          command: pip install --user ansible
+          name: Install dependencies
+          command: |
+            apk add --update ansible
+            apk add curl
       - run:
-          name: configure with ansible
-          command: ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
-  run-migration:
+          name: Configure server
+          command: |
+            cd .circleci/ansible
+            ansible-playbook -i inventory.txt configure-server.yml
+      - destroy-environment
+      - slack_notification
+
+  run-migrations:
     docker:
-      - image: node:14-alpine
+      - image: cimg/node:13.8.0
     steps:
       - checkout
       - restore_cache:
-          key: be-caches-{{ checksum "backend/package.json" }}
+          keys: [backend-build]
       - run:
-          name: Run migration
+          name: Run migrations
           command: |
             cd backend
             npm install
+            ## Run and save the migration output
             npm run migrations > migrations_dump.txt
       - run:
-          name: send migration status to kvdb
-          command: chmod +x .circleci/bash/MigrationResult.sh && .circleci/bash/MigrationResult.sh
-      - revert-migration
+          name: Send migration results to kvdb
+          command: |
+            cat ~/project/backend/migrations_dump.txt
+            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt || grep -q "No migrations are pending" ~/project/backend/migrations_dump.txt
+            then
+              echo https://kvdb.io/UTtvEbhzE2UwUcFpTFRc5R/migration_"${CIRCLE_WORKFLOW_ID:0:7}"
+              curl https://kvdb.io/UTtvEbhzE2UwUcFpTFRc5R/migration_"${CIRCLE_WORKFLOW_ID:0:7}"  -d '1'
+            fi
+      - slack_notification
+
   deploy-frontend:
     docker:
-      - image: node:14-alpine
+      - image: cimg/node:13.8.0
     steps:
       - checkout
+      - install-awscli
+      - attach_workspace:
+          at: ~/
       - run:
-          name: Install dependencies
+          name: Get BE url
           command: |
-            sudo apt upgrade 
-            sudo apt update
-            sudo apt install awscli -y
-            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-            aws configure set region $AWS_DEFAULT_REGION
-      - restore_cache:
-          name: restore node_modules
-          key: fe-caches-{{ checksum "frontend/package.json" }}
-      - restore_cache:
-          keys:
-            - fe-caches-{{ checksum "frontend/package.json" }}
-            - inventory-{{ .Revision  }}
-      - run:
-          name: export env
-          command: |
-            export BACKEND_IP=$(cat .circleci/ansible/inventory.txt | tail -n 1)
+            export BACKEND_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
             export API_URL="http://${BACKEND_IP}:3030"
-            echo "API_URL = ${API_URL}"
+            echo "${API_URL}"
             echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
             cat frontend/.env
+      - restore_cache:
+          keys: [frontend-build]
       - run:
-          name: Build frontend and deploy s3
+          name: Deploy FE
           command: |
             cd frontend
+            npm install
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
-            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-  deploy_backend:
-    executor: python/default
+            aws s3 cp dist s3://udapeople-"${CIRCLE_WORKFLOW_ID:0:7}" --recursive
+      - destroy-environment
+      - slack_notification
+
+  deploy-backend:
+    docker:
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
+      - install-awscli-alpine-based
       - add_ssh_keys:
           fingerprints:
             - 5e:0a:cf:5d:a3:74:92:9a:8b:9f:eb:dc:50:6b:16:75
-      - restore_cache:
-          name: restore inventory
-          keys:
-            - inventory-{{ .Revision  }}
-            - inventory-
-      - run:
-          name: install ansible
-          command: pip install --user ansible
-      - run:
-          name: create artifact
-          command: tar -C backend -czvf .circleci/ansible/roles/deploy/artifact/artifact.tar.gz .
-      - run:
-          name: Start backend with ansible
-          command: ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
-  smoke-test:
-    docker:
-      - image: node:14-alpine
-    steps:
-      - checkout
+      - attach_workspace:
+          at: ~/
+      - run: cat .circleci/ansible/inventory.txt
       - run:
           name: Install dependencies
           command: |
-            sudo apt upgrade 
-            sudo apt update
-            sudo apt install awscli -y
-            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-            aws configure set region $AWS_DEFAULT_REGION
+            apk add --update ansible
+            apk add curl
       - restore_cache:
-          name: restore inventory
-          keys:
-            - inventory-{{ .Revision  }}
-            - inventory-
-      - restore_cache:
-          name: restore node_modules
-          keys:
-            - be-caches-{{ checksum "backend/package.json" }}
+          keys: [backend-build]
       - run:
-          name: BE smoke test
-          command: chmod +x .circleci/bash/BESmokeTest.sh && .circleci/bash/BESmokeTest.sh
+          name: Deploy backend
+          command: |
+            tar -C backend -czvf artifact.tar.gz .
+            cd .circleci/ansible
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml
+      - destroy-environment
+      - slack_notification
+
+  smoke-test:
+    docker:
+      - image: cimg/node:13.8.0
+    steps:
+      - checkout
+      - install-awscli
       - run:
-          name: FE smoke test
-          command: chmod +x .circleci/bash/FESmokeTest.sh && .circleci/bash/FESmokeTest.sh $CIRCLE_WORKFLOW_ID
-      - revert-migration:
-          force_revert: true
-      - destroy-infra-be:
-          stack_name: udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
-      - destroy-infra-fe:
-          id: ${CIRCLE_WORKFLOW_ID:0:7}
+          name: BE Smoke Test.
+          command: |
+            export BACKEND_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}/api/status"
+            if curl "${API_URL}/api/status" | grep "ok"
+            then
+              exit 0
+            else
+              exit 1
+            fi
+      - run:
+          name: FE Smoke Test.
+          command: |
+            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/#/employees"            
+            echo ${URL} 
+            if curl -s ${URL} | grep "Welcome"
+            then
+              exit 0
+            else
+              exit 1
+            fi
+      - destroy-environment
+      - slack_notification
+
 workflows:
   default:
     jobs:
-      # - slack-notify:
-      #     context: global
-      # - build-frontend:
-      #     context: global
-      # - build-backend:
-      #     context: global
-      # - test-frontend:
-      #     requires:
-      #       - build-frontend
-      # - test-backend:
-      #     requires:
-      #       - build-backend
-      # - scan-frontend:
-      #     requires:
-      #       - build-frontend
-      # - scan-backend:
-      #     requires:
-      #       - build-backend
-      # - deploy-infrastructure-be:
-      #     requires:
-      #       - build-backend
-      #       - test-backend
-      #       - scan-backend
-      - deploy-infrastructure-be
-      - deploy-infrastructure-fe
-      - configure-infra:
-          requires:
-            - deploy-infrastructure-be
-      - run-migration
+      - build-frontend:
+          context: global
+      - build-backend:
+          context: global
+      - test-frontend:
+          requires: [build-frontend]
+      - test-backend:
+          requires: [build-backend]
+      - scan-backend:
+          requires: [build-backend]
+      - scan-frontend:
+          requires: [build-frontend]
+      - deploy-infrastructure:
+          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
       - deploy-frontend:
-          requires:
-            - deploy-infrastructure-fe
-      - deploy_backend:
-          requires:
-            - configure-infra
+          requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
       - smoke-test:
-          requires:
-            - deploy-frontend
-            - deploy_backend
+          requires: [deploy-backend, deploy-frontend]
