@@ -15,6 +15,14 @@ commands:
             aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}"
             aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}"
 
+  clean-s3:
+    description: Clean all s3 files
+    steps:
+      - run:
+          name: delete all aws s3 files
+          command: aws s3 rm s3://udapeople-"${CIRCLE_WORKFLOW_ID:0:7}" --recursive
+          when: on_fail
+
   install-aws:
     description: Install awscli for environment still not have awscli
     steps:
@@ -518,6 +526,36 @@ jobs:
       - destroy-environment
       - slack_notification
 
+  cleanup:
+    docker:
+      - image: amazon/aws-cli:latest
+    steps:
+      - checkout
+      - setup-aws
+      - install-tar
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Remove old stacks and files
+          command: |
+            cat oldWorkflowId.txt
+            export OldWorkflowID=$(cat oldWorkflowId.txt)
+            export OldWorkflowIDFromAWS=$(aws cloudformation \
+              list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+              --no-paginate --output text)
+            echo OldWorkflowID: "${OldWorkflowID}"
+            echo OldWorkflowIDFromAWS: "${OldWorkflowIDFromAWS}"
+            echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
+            if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowID}" ]]
+            then
+              echo "Start to clean up..."
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+            fi
+      - slack_notification
+      - slack_notification_succeeded
+
 workflows:
   default:
     jobs:
@@ -547,3 +585,5 @@ workflows:
           requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
           requires: [smoke-test]
+      - cleanup:
+          requires: [cloudfront-update]
