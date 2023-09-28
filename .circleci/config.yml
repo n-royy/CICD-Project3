@@ -342,7 +342,8 @@ jobs:
             - 5e:0a:cf:5d:a3:74:92:9a:8b:9f:eb:dc:50:6b:16:75
       - attach_workspace:
           at: ~/
-      - run: cat .circleci/ansible/inventory.txt
+      - restore_cache:
+          key: inventory-{{ .Revision  }}
       - run:
           name: Install dependencies
           command: |
