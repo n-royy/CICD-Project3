@@ -299,7 +299,6 @@ jobs:
   deploy-infrastructure:
     docker:
       - image: amazon/aws-cli:latest
-    working_directory: ~/project
     steps:
       - checkout
       - setup-aws
@@ -313,16 +312,6 @@ jobs:
               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
-          name: Add back-end IP to ansible inventory
-          command: |
-            echo [web] > .circleci/ansible/inventory.txt
-            aws ec2 describe-instances --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --query 'Reservations[*].Instances[*].PublicIpAddress' --output text >> .circleci/ansible/inventory.txt
-      - run: cat .circleci/ansible/inventory.txt
-      - save_cache:
-          paths:
-            - .circleci/ansible/inventory.txt
-          key: inventory-{{ .Revision  }}
-      - run:
           name: Deploy front-end infrastructure
           command: |
             aws cloudformation deploy \
@@ -330,6 +319,16 @@ jobs:
               --tags project=udapeople \
               --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
+      - run:
+          name: Add Back-End IP to ansible
+          command: |
+            aws ec2 describe-instances --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --query 'Reservations[*].Instances[*].PublicIpAddress' --output text >> .circleci/ansible/inventory.txt
+      - run: cat .circleci/ansible/inventory.txt
+      - run: pwd
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
       - destroy-environment
       - slack_notification
 
@@ -342,8 +341,9 @@ jobs:
       - add_ssh_keys:
           fingerprints:
             - 5e:0a:cf:5d:a3:74:92:9a:8b:9f:eb:dc:50:6b:16:75
-      - restore_cache:
-          key: inventory-{{ .Revision  }}
+      - attach_workspace:
+          at: ~/
+      - run: cat .circleci/ansible/inventory.txt
       - run:
           name: Install dependencies
           command: |
@@ -351,7 +351,9 @@ jobs:
             apk add curl
       - run:
           name: Configure server
-          command: ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
+          command: |
+            cd .circleci/ansible
+            ansible-playbook -i inventory.txt configure-server.yml
       - destroy-environment
       - slack_notification
 
@@ -377,6 +379,7 @@ jobs:
               echo https://kvdb.io/UTtvEbhzE2UwUcFpTFRc5R/migration_"${CIRCLE_WORKFLOW_ID:0:7}"
               curl https://kvdb.io/UTtvEbhzE2UwUcFpTFRc5R/migration_"${CIRCLE_WORKFLOW_ID:0:7}"  -d '1'
             fi
+      - destroy-environment
       - slack_notification
 
   deploy-frontend:

@@ -5,7 +5,7 @@
     state: directory
 - name: Unarchive artifact
   unarchive:
-    src: ../artifact/artifact.tar.gz
+    src: ../../artifact.tar.gz
     dest: /home/ubuntu/project
 - name: Copy env file
   shell: cp /tmp/.env /home/ubuntu/project
