@@ -47,6 +47,22 @@ commands:
             aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
             aws configure set region $AWS_DEFAULT_REGION
 
+  revert-migrations:
+    description: Revert the last migration if successfully run in the current workflow.
+    steps:
+      - run:
+          name: Revert migrations
+          when: on_fail
+          command: |
+            export KVDB_URL=https://kvdb.io/UTtvEbhzE2UwUcFpTFRc5R/migration_"${CIRCLE_WORKFLOW_ID:0:7}"
+            echo $KVDB_URL
+            export SUCCESS=$(curl --insecure $KVDB_URL | tail -n 1)
+            if(( $SUCCESS==0 ));
+            then
+              cd backend
+              npm run migrations:revert
+            fi
+
   slack_notification:
     description: 'A slack notification'
     steps:
@@ -379,7 +395,7 @@ jobs:
               echo https://kvdb.io/UTtvEbhzE2UwUcFpTFRc5R/migration_"${CIRCLE_WORKFLOW_ID:0:7}"
               curl https://kvdb.io/UTtvEbhzE2UwUcFpTFRc5R/migration_"${CIRCLE_WORKFLOW_ID:0:7}"  -d '1'
             fi
-      - destroy-environment
+      - revert-migrations
       - slack_notification
 
   deploy-frontend:
@@ -465,10 +481,11 @@ jobs:
             echo ${URL} 
             if curl -s ${URL} | grep "Welcome"
             then
-              exit 0
+              exit 1
             else
               exit 1
             fi
+      - revert-migrations
       - destroy-environment
       - slack_notification
 
