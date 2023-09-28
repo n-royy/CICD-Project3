@@ -21,6 +21,10 @@ Resources:
           FromPort: 3030
           ToPort: 3030
           CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 9100
+          ToPort: 9100
+          CidrIp: 0.0.0.0/0
 
   EC2Instance:
     Type: AWS::EC2::Instance
@@ -35,10 +39,3 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub backend-${ID}
-
-Outputs:
-  EC2Instance:
-    Description: Instance Id
-    Value: !Ref EC2Instance
-    Export:
-      Name: !Sub EC2InstanceId-${ID}
