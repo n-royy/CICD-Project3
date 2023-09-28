@@ -299,6 +299,7 @@ jobs:
   deploy-infrastructure:
     docker:
       - image: amazon/aws-cli:latest
+    working_directory: ~/project
     steps:
       - checkout
       - setup-aws
