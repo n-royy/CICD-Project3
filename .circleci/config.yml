@@ -481,11 +481,40 @@ jobs:
             echo ${URL} 
             if curl -s ${URL} | grep "Welcome"
             then
-              exit 1
+              exit 0
             else
               exit 1
             fi
       - revert-migrations
+      - destroy-environment
+      - slack_notification
+
+  cloudfront-update:
+    docker:
+      - image: amazon/aws-cli:latest
+    steps:
+      - checkout
+      - setup-aws
+      - install-tar
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            export OldWorkflowID=$(aws cloudformation \
+              list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+              --no-paginate --output text)
+            echo OldWorkflowID: "${OldWorkflowID}"
+            echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
+             aws cloudformation deploy \
+              --template-file .circleci/files/cloudfront.yml \
+              --stack-name "InitialStack" \
+              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
+              --tags project=udapeople
+            echo ${OldWorkflowID} >> oldWorkflowId.txt
+            pwd
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/oldWorkflowId.txt
       - destroy-environment
       - slack_notification
 
@@ -516,3 +545,5 @@ workflows:
           requires: [run-migrations]
       - smoke-test:
           requires: [deploy-backend, deploy-frontend]
+      - cloudfront-update:
+          requires: [smoke-test]
