@@ -15,7 +15,7 @@ commands:
             aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}"
             aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}"
 
-  install-awscli:
+  install-aws:
     description: Install awscli for environment still not have awscli
     steps:
       - run:
@@ -28,7 +28,7 @@ commands:
             aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
             aws configure set region $AWS_DEFAULT_REGION
 
-  install-tar-utility:
+  install-tar:
     description: Install tar utility
     steps:
       - run:
@@ -36,7 +36,7 @@ commands:
           command: |
             yum install -y tar gzip
 
-  install-awscli-alpine-based:
+  install-aws-alpine:
     description: Install awscli for environment still not have awscli
     steps:
       - run:
@@ -302,7 +302,7 @@ jobs:
     steps:
       - checkout
       - setup-aws
-      - install-tar-utility
+      - install-tar
       - run:
           name: Deploy back-end infrastructure
           command: |
@@ -337,7 +337,7 @@ jobs:
       - image: python:3.7-alpine3.11
     steps:
       - checkout
-      - install-awscli-alpine-based
+      - install-aws-alpine
       - add_ssh_keys:
           fingerprints:
             - 5e:0a:cf:5d:a3:74:92:9a:8b:9f:eb:dc:50:6b:16:75
@@ -386,7 +386,7 @@ jobs:
       - image: cimg/node:13.8.0
     steps:
       - checkout
-      - install-awscli
+      - install-aws
       - attach_workspace:
           at: ~/
       - run:
@@ -415,7 +415,7 @@ jobs:
       - image: python:3.7-alpine3.11
     steps:
       - checkout
-      - install-awscli-alpine-based
+      - install-aws-alpine
       - add_ssh_keys:
           fingerprints:
             - 5e:0a:cf:5d:a3:74:92:9a:8b:9f:eb:dc:50:6b:16:75
@@ -444,7 +444,7 @@ jobs:
       - image: cimg/node:13.8.0
     steps:
       - checkout
-      - install-awscli
+      - install-aws
       - run:
           name: BE Smoke Test.
           command: |
