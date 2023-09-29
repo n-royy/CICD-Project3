@@ -1,0 +1,5 @@
+Public Url to GitHub repository: https://github.com/n-royy/CICD-Project3
+Public URL for your S3 Bucket: http://udapeople-2f10d7b.s3-website-us-east-1.amazonaws.com/
+Public URL for your CloudFront distribution: https://d1j0y0s0w2qqg5.cloudfront.net
+Public URLs to deployed application back-end in EC2: http://44.211.128.118:3030/api/status
+Public URL to your Prometheus Server: http://ec2-54-234-247-36.compute-1.amazonaws.com:9090/
